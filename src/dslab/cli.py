@@ -1,6 +1,7 @@
 ﻿"""Command-line interface for the data quality toolkit."""
 
 import argparse
+import csv
 import json
 import sys
 
@@ -27,15 +28,9 @@ def main() -> int:
             print(f"\nReport saved to: {args.output}")
 
         return 0
-    except (OSError, ValueError, csv_error()) as error:
+    except (OSError, ValueError, csv.Error) as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
-
-
-def csv_error():
-    """Return the CSV parser exception type."""
-    import csv
-    return csv.Error
 
 
 if __name__ == "__main__":
