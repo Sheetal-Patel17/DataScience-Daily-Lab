@@ -1,0 +1,9 @@
+customer_id,name,email,age,city,signup_date,rejection_reason
+103,Meera Joshi,meera@example.com,,Rajkot,2026-01-10,invalid_age
+104,Dev Kumar,invalid_email,30.0,Ahmedabad,2026-01-12,invalid_email
+105,Neha Desai,neha@example.com,200.0,Vadodara,2026-01-15,invalid_age
+106,Arjun Mehta,arjun@example.com,28.0,,2026-01-17,missing_city
+106,Arjun Mehta,arjun@example.com,28.0,,2026-01-17,duplicate_complete_row;duplicate_customer_id;missing_city
+107,,unknown@example.com,24.0,Surat,2026-01-20,missing_name
+108,Kavya Rao,kavya@example.com,21.0,Rajkot,,invalid_signup_date
+109,Ishaan Patel,ishaan@example.com,-5.0,Ahmedabad,2026-01-25,invalid_age
