@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSV Data Profile Report</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 32px; color: #202938;
+       background: #f5f7fb; }
+h1 { margin-bottom: 8px; }
+p { color: #526176; }
+.cards { display: flex; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
+.card { background: white; padding: 20px; border-radius: 12px;
+         box-shadow: 0 2px 8px #17203312; min-width: 140px; }
+.value { font-size: 28px; font-weight: bold; margin-top: 8px; }
+.table-wrap { overflow-x: auto; background: white; border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e9f0; }
+th { background: #eaf0f8; }
+tr:hover { background: #f8fafc; }
+</style>
+</head>
+<body>
+<h1>CSV Data Profile Report</h1>
+<p>Automated overview of dataset structure and data quality.</p>
+<div class="cards">
+<div class="card">Rows<div class="value">6</div></div>
+<div class="card">Columns<div class="value">5</div></div>
+<div class="card">Missing cells<div class="value">2</div></div>
+<div class="card">Duplicate rows<div class="value">1</div></div>
+</div>
+<h2>Column details</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Column</th><th>Data type</th><th>Missing</th><th>Missing %</th><th>Unique values</th><th>Minimum</th><th>Maximum</th><th>Mean</th></tr></thead>
+<tbody><tr><td>customer_id</td><td>int64</td><td>0</td><td>0.0%</td><td>5</td><td>201.0</td><td>205.0</td><td>203.17</td></tr>
+<tr><td>name</td><td>str</td><td>0</td><td>0.0%</td><td>5</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>age</td><td>float64</td><td>1</td><td>16.67%</td><td>4</td><td>22.0</td><td>30.0</td><td>27.0</td></tr>
+<tr><td>city</td><td>str</td><td>1</td><td>16.67%</td><td>3</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>spending</td><td>int64</td><td>0</td><td>0.0%</td><td>5</td><td>1200.0</td><td>2300.0</td><td>1683.33</td></tr></tbody>
+</table>
+</div>
+</body>
+</html>
