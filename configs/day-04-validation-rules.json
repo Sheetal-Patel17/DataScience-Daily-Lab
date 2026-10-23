@@ -1,0 +1,19 @@
+﻿{
+  "required": ["customer_id", "name", "city"],
+  "types": {
+    "customer_id": "integer",
+    "age": "integer",
+    "spending": "number"
+  },
+  "ranges": {
+    "age": {"min": 0, "max": 120},
+    "spending": {"min": 0, "max": 100000}
+  },
+  "allowed_values": {
+    "city": ["Ahmedabad", "Surat", "Rajkot"]
+  },
+  "string_lengths": {
+    "name": {"min": 2, "max": 80}
+  },
+  "unique": ["customer_id"]
+}
