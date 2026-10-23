@@ -1,4 +1,4 @@
-﻿"""Load and validate JSON rule configuration."""
+"""Load and validate JSON rule configuration."""
 
 import json
 from pathlib import Path
@@ -22,7 +22,7 @@ def load_rules(path: str | Path) -> dict[str, Any]:
         rules = json.load(file)
 
     if not isinstance(rules, dict):
-        raise ValueError("Rules configuration must be a JSON object.")
+        raise TypeError("Rules configuration must be a JSON object.")
 
     unknown = set(rules) - RULE_KEYS
     if unknown:
@@ -48,7 +48,7 @@ def load_rules(path: str | Path) -> dict[str, Any]:
     for section in ("ranges", "string_lengths"):
         for field, limits in rules.get(section, {}).items():
             if not isinstance(limits, dict):
-                raise ValueError(f"Limits for '{field}' must be an object.")
+                raise TypeError(f"Limits for '{field}' must be an object.")
             if set(limits) - {"min", "max"}:
                 raise ValueError(f"Unknown limit for '{field}'.")
             if not limits:
@@ -67,6 +67,6 @@ def load_rules(path: str | Path) -> dict[str, Any]:
 
     for field, values in rules.get("allowed_values", {}).items():
         if not isinstance(values, list):
-            raise ValueError(f"Allowed values for '{field}' must be a list.")
+            raise TypeError(f"Allowed values for '{field}' must be a list.")
 
     return rules
