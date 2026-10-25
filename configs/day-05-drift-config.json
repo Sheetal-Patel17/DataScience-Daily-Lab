@@ -1,0 +1,4 @@
+{
+  "missing_rate_increase_threshold": 0.2,
+  "description": "Flag a missing-value increase of at least 20 percentage points."
+}
