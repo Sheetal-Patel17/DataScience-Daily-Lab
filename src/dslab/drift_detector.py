@@ -18,6 +18,13 @@ def read_csv(path: str | Path) -> tuple[list[str], list[dict[str, str]]]:
     return headers, rows
 
 
+def missing_rate(rows: list[dict[str, str]], column: str) -> float:
+    if not rows:
+        return 0.0
+    missing = sum(not (row.get(column) or "").strip() for row in rows)
+    return missing / len(rows)
+
+
 def compare_csvs(
     baseline_path: str | Path,
     current_path: str | Path,
@@ -49,6 +56,16 @@ def compare_csvs(
             findings.append(DriftFinding(
                 "type_changed", column, "high", old_type, new_type,
                 f"Column '{column}' changed type from {old_type} to {new_type}.",
+            ))
+
+        old_rate = missing_rate(old_rows, column)
+        new_rate = missing_rate(new_rows, column)
+        increase = new_rate - old_rate
+        if increase >= missing_rate_threshold:
+            findings.append(DriftFinding(
+                "missing_rate_increased", column, "medium",
+                f"{old_rate:.1%}", f"{new_rate:.1%}",
+                f"Missing values in '{column}' increased by {increase:.1%}.",
             ))
 
     return DriftReport(
