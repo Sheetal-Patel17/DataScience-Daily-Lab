@@ -6,7 +6,6 @@ import pytest
 
 from dslab.scorecard_engine import build_scorecard, grade_score
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
