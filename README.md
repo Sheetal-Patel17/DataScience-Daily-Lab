@@ -21,3 +21,14 @@ python -m dslab.drift --baseline data/day-05/baseline_customers.csv --current da
 
 See `docs/day-05-schema-drift.md` for details and exit codes.
 
+## Day 6: Unified Data Quality Scorecard
+
+Calculate a weighted 0–100 score using completeness, uniqueness, and validity.
+The report includes quality grades, metric counts, and recommendations.
+
+```powershell
+python -m dslab.scorecard --input data/day-06/customers.csv --config configs/day-06-scorecard.json --output reports/day-06/scorecard.json
+```
+
+See `docs/day-06-data-quality-scorecard.md` for the scoring methodology.
+
