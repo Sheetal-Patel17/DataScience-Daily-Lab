@@ -1,6 +1,17 @@
-# Day 6 — Unified Data Quality Scorecard
+# Day 6: Unified Data Quality Scorecard
 
-The scorecard combines completeness, uniqueness, and validity metrics into a single configurable quality score. It produces a machine-readable report with metric details and actionable recommendations.
+## Purpose
+
+Produce a score from 0 to 100 summarizing completeness, uniqueness, and validity. The JSON output includes component scores, grade, counts, and actionable recommendations.
+
+## Scoring methodology
+
+- **Completeness:** Percentage of cells that are not blank.
+- **Uniqueness:** Percentage of rows that are not duplicate occurrences.
+- **Validity:** Percentage of rows that pass required-field and configured numeric-range checks.
+- **Overall score:** Weighted average of the three percentages, normalized by the sum of configured weights.
+
+Default weights are 40% completeness, 30% uniqueness, and 30% validity. Grades are configurable in `configs/day-06-scorecard.json`.
 
 ## Run the scorecard
 
@@ -12,9 +23,9 @@ python -m dslab.scorecard --input data/day-06/customers.csv --config configs/day
 
 Review the generated JSON report for the overall score, individual metrics, and recommendations.
 
-## Interpreting results
+## Important limitations
 
-A numeric field that is blank is counted as incomplete; required fields also affect row validity. Duplicate detection compares complete rows, not a business key. This scorecard is a useful screening metric, not a guarantee that a dataset is correct or suitable for every business purpose.
+The validity score measures only the checks declared in the configuration. A numeric field that is blank is counted as incomplete; required fields also affect row validity. Duplicate detection compares complete rows, not a business key. This scorecard is a useful screening metric, not a guarantee that a dataset is correct or suitable for every business purpose.
 
 ## Troubleshooting
 
@@ -24,7 +35,7 @@ A numeric field that is blank is counted as incomplete; required fields also aff
 - **Unexpected quality score:** Review the completeness, uniqueness, and validity metrics before changing the weights.
 - **Test failures:** Run `python -m pytest -q` from the repository root to identify the failing test.
 
-### Validation checklist
+## Validation checklist
 
 Before sharing a scorecard report:
 
