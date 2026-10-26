@@ -1,0 +1,16 @@
+{
+  "weights": {
+    "completeness": 0.4,
+    "uniqueness": 0.3,
+    "validity": 0.3
+  },
+  "required_columns": ["id", "name", "email"],
+  "numeric_ranges": {
+    "age": {"min": 0, "max": 120}
+  },
+  "grades": {
+    "excellent": 90,
+    "good": 75,
+    "needs_improvement": 50
+  }
+}
