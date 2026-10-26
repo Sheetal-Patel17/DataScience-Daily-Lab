@@ -1,0 +1,8 @@
+id,name,email,age,city
+1,Asha,asha@example.com,25,Ahmedabad
+2,Ravi,ravi@example.com,31,Surat
+3,Meera,meera@example.com,28,Rajkot
+4,Dev,dev@example.com,35,Ahmedabad
+5,Nia,nia@example.com,22,Surat
+6,Nia,nia@example.com,22,Surat
+7,,bad-email,150,
