@@ -1,0 +1,5 @@
+{
+  "missing_rate_delta_threshold": 0.10,
+  "numeric_relative_change_threshold": 0.20,
+  "categorical_total_variation_threshold": 0.20
+}
