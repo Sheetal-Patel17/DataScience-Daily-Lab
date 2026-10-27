@@ -10,3 +10,6 @@ dist/
 build/
 *.egg-info/
 reports/*.json
+
+# Generated JSON reports in nested folders
+reports/**/*.json
