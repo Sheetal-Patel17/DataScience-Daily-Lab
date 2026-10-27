@@ -32,3 +32,16 @@ python -m dslab.scorecard --input data/day-06/customers.csv --config configs/day
 
 See `docs/day-06-data-quality-scorecard.md` for the scoring methodology.
 
+
+## Day 7: Distribution Drift Detection
+
+Compare baseline and current CSV datasets to flag possible shifts in numeric
+and categorical distributions and missing-value rates. The JSON report includes
+per-column signals, configured thresholds, and schema differences.
+
+```powershell
+python -m dslab.distribution_drift --baseline data/day-07/baseline_customers.csv --current data/day-07/current_customers.csv --config configs/day-07-distribution-drift.json --output reports/day-07/distribution-drift.json
+```
+
+See [the Day 7 guide](docs/day-07-distribution-drift.md) for methodology,
+thresholds, usage, and limitations.
