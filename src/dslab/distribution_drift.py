@@ -3,8 +3,8 @@ import json
 import sys
 from pathlib import Path
 
+from dslab.distribution_drift_report import write_drift_report
 from dslab.drift_engine import compare_datasets
-from dslab.drift_report import write_drift_report
 
 
 def main(argv: list[str] | None = None) -> int:

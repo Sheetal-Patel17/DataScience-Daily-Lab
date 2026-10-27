@@ -3,7 +3,6 @@ from dslab.drift_data import read_csv_dataset
 from dslab.drift_metrics import absolute_rate_change, missing_rate
 from dslab.drift_numeric import compare_numeric, parse_numeric
 
-
 DEFAULT_THRESHOLDS = {
     "missing_rate_delta_threshold": 0.10,
     "numeric_relative_change_threshold": 0.20,
@@ -16,7 +15,7 @@ def _thresholds(config: dict) -> dict[str, float]:
     for key, default in DEFAULT_THRESHOLDS.items():
         value = config.get(key, default)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise ValueError(f"Threshold must be numeric: {key}")
+            raise TypeError(f"Threshold must be numeric: {key}")
         if value < 0 or (
             key != "numeric_relative_change_threshold" and value > 1
         ):
