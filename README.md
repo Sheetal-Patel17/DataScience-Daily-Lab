@@ -45,3 +45,16 @@ python -m dslab.distribution_drift --baseline data/day-07/baseline_customers.csv
 
 See [the Day 7 guide](docs/day-07-distribution-drift.md) for methodology,
 thresholds, usage, and limitations.
+
+## Day 8: Dataset Provenance and Integrity Audit
+
+Create SHA-256 provenance manifests for input CSVs and optional JSON configs,
+record dataset shape and runtime details, then verify later that source contents
+still match the recorded snapshot.
+
+```powershell
+python -m dslab.provenance create --input data/day-08/orders_snapshot.csv --config configs/day-08-provenance.json --output reports/day-08/provenance-manifest.json
+python -m dslab.provenance verify --manifest reports/day-08/provenance-manifest.json --output reports/day-08/verification.json
+```
+
+See [the Day 8 guide](docs/day-08-provenance-audit.md) for usage and limitations.
