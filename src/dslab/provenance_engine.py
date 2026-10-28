@@ -1,6 +1,6 @@
 import json
 import platform
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from dslab.provenance_dataset import inspect_csv
@@ -61,7 +61,7 @@ def build_manifest(
         }
 
     created_at = (
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
         .isoformat(timespec="seconds")
         .replace("+00:00", "Z")
     )
