@@ -1,0 +1,9 @@
+order_id,customer_id,order_total,order_status,region
+ORD-1001,C001,125.50,paid,west
+ORD-1002,C002,89.99,shipped,north
+ORD-1003,C003,240.00,paid,west
+ORD-1004,C001,42.75,pending,south
+ORD-1005,C004,310.20,shipped,north
+ORD-1006,C005,74.00,cancelled,west
+ORD-1007,C002,155.80,paid,east
+ORD-1008,C006,199.95,pending,south
