@@ -1,4 +1,4 @@
-﻿
+
 ## Day 4: Configurable Validation Rules Engine
 
 Day 4 adds configurable CSV validation using JSON rules. It supports required
@@ -58,3 +58,14 @@ python -m dslab.provenance verify --manifest reports/day-08/provenance-manifest.
 ```
 
 See [the Day 8 guide](docs/day-08-provenance-audit.md) for usage and limitations.
+## Day 9: Dataset Splitter and Leakage Guard
+
+Create reproducible train, validation, and test CSVs with optional target
+stratification and group-aware splitting. The JSON report summarizes split
+ratios and warns when exact duplicate rows cross partitions.
+
+```powershell
+python -m dslab.dataset_split --input data/day-09/orders_labeled.csv --config configs/day-09-split.json --output-dir reports/day-09/splits --group-column customer_id
+```
+
+See [the Day 9 guide](docs/day-09-dataset-split.md) for usage and limitations.
