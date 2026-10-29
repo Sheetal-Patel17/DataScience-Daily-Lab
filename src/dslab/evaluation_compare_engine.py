@@ -17,19 +17,19 @@ def _read_json_object(path: str | Path, description: str) -> dict:
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON in {description}: {path}") from exc
     if not isinstance(value, dict):
-        raise ValueError(f"{description} must be a JSON object: {path}")
+        raise TypeError(f"{description} must be a JSON object: {path}")
     return value
 
 
 def _validate_metrics(report: dict, description: str) -> dict[str, float]:
     metrics = report.get("metrics")
     if not isinstance(metrics, dict):
-        raise ValueError(f"{description} has no valid 'metrics' object.")
+        raise TypeError(f"{description} has no valid 'metrics' object.")
     validated = {}
     for name in DEFAULT_THRESHOLDS:
         value = metrics.get(name)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise ValueError(f"{description} is missing numeric metric: {name}")
+            raise TypeError(f"{description} is missing numeric metric: {name}")
         if not math.isfinite(value) or not 0 <= value <= 1:
             raise ValueError(f"Metric {name} in {description} must be between 0 and 1.")
         validated[name] = float(value)
@@ -42,7 +42,7 @@ def _read_thresholds(config_path: str | Path | None) -> dict[str, float]:
     config = _read_json_object(config_path, "threshold configuration")
     thresholds = config.get("metric_drop_thresholds")
     if not isinstance(thresholds, dict):
-        raise ValueError("Configuration needs a 'metric_drop_thresholds' object.")
+        raise TypeError("Configuration needs a 'metric_drop_thresholds' object.")
     unknown = set(thresholds) - set(DEFAULT_THRESHOLDS)
     if unknown:
         raise ValueError(f"Unknown regression metric(s): {', '.join(sorted(unknown))}")
@@ -94,9 +94,7 @@ def compare_evaluations(
         "thresholds_are_absolute_score_drops": True,
         "notes": [
             "Metric values are assumed to be between 0 and 1, where higher is better.",
-            "A regression is flagged only when the drop strictly exceeds "
-            "its threshold.",
-            "A comparison report is a screening aid, not a substitute for "
-            "model review.",
+            "A regression is flagged only when the drop strictly exceeds its threshold.",
+            "A comparison report is a screening aid, not a substitute for model review.",
         ],
     }

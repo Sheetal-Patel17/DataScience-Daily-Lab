@@ -69,7 +69,6 @@ def classification_metrics(actual: list[str], predicted: list[str]) -> dict:
         "notes": [
             "Precision, recall, and F1 are calculated one-vs-rest for each label.",
             "Scores with a zero denominator are set to 0.0.",
-            "This report describes predictions; it does not prove model "
-            "generalization.",
+            "This report describes predictions; it does not prove model generalization.",
         ],
     }
