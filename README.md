@@ -69,3 +69,15 @@ python -m dslab.dataset_split --input data/day-09/orders_labeled.csv --config co
 ```
 
 See [the Day 9 guide](docs/day-09-dataset-split.md) for usage and limitations.
+
+## Day 10: Classification Metrics Evaluator
+
+Evaluate actual and predicted labels from a CSV using accuracy, per-class
+precision/recall/F1, macro and weighted averages, and a confusion matrix.
+
+```powershell
+python -m dslab.classification_eval --input data/day-10/candidate_predictions.csv --output reports/day-10/candidate-evaluation.json
+```
+
+See [the Day 10 guide](docs/day-10-classification-evaluation.md) for metrics,
+input requirements, and interpretation notes.
