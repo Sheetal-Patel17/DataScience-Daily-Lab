@@ -1,6 +1,5 @@
 import csv
 import json
-from collections import Counter
 from pathlib import Path
 
 from dslab.split_engine import SPLIT_NAMES
