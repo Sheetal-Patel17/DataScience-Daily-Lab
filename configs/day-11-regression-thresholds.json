@@ -1,0 +1,9 @@
+{
+  "metric_drop_thresholds": {
+    "accuracy": 0.03,
+    "macro_precision": 0.05,
+    "macro_recall": 0.05,
+    "macro_f1": 0.05,
+    "weighted_f1": 0.05
+  }
+}
