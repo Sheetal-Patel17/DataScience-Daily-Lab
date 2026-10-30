@@ -1,4 +1,4 @@
-# DataScience-Daily-Lab
+﻿# DataScience-Daily-Lab
 
 A hands-on data science and data quality toolkit built through daily practical projects, with examples, tests, and documentation.
 
@@ -38,7 +38,7 @@ See `docs/day-05-schema-drift.md` for details and exit codes.
 
 ## Day 6: Unified Data Quality Scorecard
 
-Calculate a weighted 0â€“100 score using completeness, uniqueness, and validity.
+Calculate a weighted 0Ã¢â‚¬â€œ100 score using completeness, uniqueness, and validity.
 The report includes quality grades, metric counts, and recommendations.
 
 ```powershell
@@ -116,3 +116,4 @@ exit codes, and limitations.
 - Added accuracy-gap warnings.
 - Added per-class performance reporting.
 - Documented the limitations of group comparisons.
+
