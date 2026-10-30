@@ -1,3 +1,18 @@
+# DataScience-Daily-Lab
+
+A hands-on data science and data quality toolkit built through daily practical projects, with examples, tests, and documentation.
+
+## Day 1: Data Quality Toolkit
+
+Built a foundational toolkit for CSV profiling, missing-value and duplicate detection, JSON reporting, SQL data-quality checks, and an R example. Added automated tests, linting, and continuous integration.
+
+## Day 2: Data Cleaning Pipeline
+
+Built a repeatable CSV cleaning workflow that separates valid records from rejected records and generates a quality report. Outputs include `customers_clean.csv`, `customers_rejected.csv`, and `quality_report.json`.
+
+## Day 3: HTML Data Profile
+
+Created an HTML data profiling tool to make dataset structure and quality easier to inspect through a readable report.
 
 ## Day 4: Configurable Validation Rules Engine
 
@@ -23,7 +38,7 @@ See `docs/day-05-schema-drift.md` for details and exit codes.
 
 ## Day 6: Unified Data Quality Scorecard
 
-Calculate a weighted 0–100 score using completeness, uniqueness, and validity.
+Calculate a weighted 0â€“100 score using completeness, uniqueness, and validity.
 The report includes quality grades, metric counts, and recommendations.
 
 ```powershell
