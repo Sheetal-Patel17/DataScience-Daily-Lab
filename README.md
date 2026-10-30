@@ -1,3 +1,50 @@
+## Day 1: Data Quality Toolkit
+
+A Python CSV profiling toolkit that analyzes dataset structure and data quality.
+
+Features:
+- CSV header and column validation.
+- Automatic data-type inference.
+- Missing-value detection by column.
+- Duplicate-row detection.
+- Dataset quality metrics.
+- JSON report generation.
+
+Run:
+    python -m dslab.cli path\to\your_dataset.csv --output reports\day-01\quality-report.json
+
+## Day 2: Data Cleaning Pipeline
+
+A pandas-based customer CSV cleaning pipeline.
+
+Features:
+- Required-column validation.
+- Customer ID and duplicate-record checks.
+- Name, email, age, and signup-date validation.
+- Text and date standardization.
+- Separate cleaned and rejected CSV files.
+- Rejection reasons and before/after quality metrics.
+- JSON quality report.
+
+Run:
+    python -m dslab.cleaning --input path\to\customers.csv --output-dir reports\day-02
+
+## Day 3: HTML Data Profile
+
+Generate a self-contained HTML report for exploring dataset structure and quality.
+
+Features:
+- Dataset row and column counts.
+- Missing cells and duplicate rows.
+- Column data types and unique-value counts.
+- Missing-value counts and percentages.
+- Numeric minimum, maximum, and mean.
+- HTML summary cards and column-detail table.
+
+Run:
+    python -m dslab.profiling --input path\to\your_dataset.csv --output reports\day-03\profile.html
+
+---
 
 ## Day 4: Configurable Validation Rules Engine
 
