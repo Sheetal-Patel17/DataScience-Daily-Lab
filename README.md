@@ -109,7 +109,7 @@ python -m dslab.evaluation_compare --baseline reports/day-10/baseline-evaluation
 See [the Day 11 guide](docs/day-11-evaluation-regression-guard.md) for thresholds,
 exit codes, and limitations.
 
-## Day 12 - Classification Slice Performance Audit
+## Day 12: Classification Slice Performance Audit
 
 - Added classification metrics by group.
 - Added minimum group-size checks.
