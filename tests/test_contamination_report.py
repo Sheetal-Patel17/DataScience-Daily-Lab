@@ -10,7 +10,7 @@ def test_cli_writes_json_report(tmp_path):
     result = subprocess.run(
         [sys.executable, "-m", "dslab.contamination_report",
          "--input", str(source), "--output", str(report)],
-        capture_output=True, text=True,
+        capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
     data = json.loads(report.read_text(encoding="utf-8"))
@@ -20,6 +20,6 @@ def test_cli_writes_json_report(tmp_path):
 def test_cli_requires_input():
     result = subprocess.run(
         [sys.executable, "-m", "dslab.contamination_report"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, check=False,
     )
     assert result.returncode != 0

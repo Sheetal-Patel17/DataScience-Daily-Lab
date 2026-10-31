@@ -1,4 +1,5 @@
 import pytest
+
 from dslab.contamination_normalize import normalize_value, read_csv, row_fingerprint
 
 

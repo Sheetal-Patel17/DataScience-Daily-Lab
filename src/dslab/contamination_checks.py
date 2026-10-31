@@ -1,8 +1,8 @@
 """Individual contamination screening checks."""
 from collections import Counter
+
 from .contamination_models import Finding
 from .contamination_normalize import normalize_value, row_fingerprint
-
 
 SUSPICIOUS_NAME_PARTS = (
     "target", "label", "outcome", "ground_truth", "ground truth",

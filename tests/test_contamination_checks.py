@@ -1,5 +1,7 @@
 from dslab.contamination_checks import (
-    blank_value_counts, duplicate_findings, normalized_duplicate_groups,
+    blank_value_counts,
+    duplicate_findings,
+    normalized_duplicate_groups,
     suspicious_columns,
 )
 
