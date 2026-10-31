@@ -25,7 +25,6 @@ def test_duplicate_groups_include_csv_line_numbers():
 def test_blank_counts_are_reported():
     rows = [{"name": "Alice"}, {"name": "  "}]
     assert blank_value_counts(rows, ["name"]) == {"name": 1}
-from dslab.contamination_checks import duplicate_findings
 
 
 def test_duplicate_detection_ignores_case_and_extra_spaces():
