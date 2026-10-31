@@ -1,4 +1,4 @@
-﻿# DataScience-Daily-Lab
+# DataScience-Daily-Lab
 
 A hands-on data science and data quality toolkit built through daily practical projects, with examples, tests, and documentation.
 
@@ -116,4 +116,18 @@ exit codes, and limitations.
 - Added accuracy-gap warnings.
 - Added per-class performance reporting.
 - Documented the limitations of group comparisons.
+
+## Day 13: Dataset Contamination and Duplicate Audit
+
+Added a standard-library CSV audit tool to flag normalized duplicate rows,
+overlap between two datasets, blank values, and suspicious target-related column
+names. It generates a JSON report and includes automated tests, sample data, and
+documented limitations.
+
+Run:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m dslab.contamination_report --input data/day-13/train.csv --compare data/day-13/test.csv --output reports/day-13-audit.json
+```
 
