@@ -25,3 +25,9 @@ def test_rejects_rows_with_extra_fields(tmp_path):
     path.write_text("name\nAlice,Extra\n", encoding="utf-8")
     with pytest.raises(ValueError, match="Extra fields"):
         read_csv(path)
+def test_rejects_empty_csv_file(tmp_path):
+    path = tmp_path / "empty.csv"
+    path.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        read_csv(path)
