@@ -131,3 +131,16 @@ $env:PYTHONPATH = "src"
 python -m dslab.contamination_report --input data/day-13/train.csv --compare data/day-13/test.csv --output reports/day-13-audit.json
 ```
 
+
+## Day 14: Categorical Feature Audit
+
+Audit categorical value distributions, blank values, rare categories, high
+cardinality, and values that differ only by capitalization or whitespace.
+The tool produces a structured JSON report with per-column findings, overall review summaries, and configurable thresholds.
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m dslab.categorical_audit --input data/day-14/customers.csv --output reports/day-14/categorical-audit.json
+```
+
+See `docs/day-14-categorical-feature-audit.md` for usage and limitations.
