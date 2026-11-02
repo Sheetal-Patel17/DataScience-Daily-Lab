@@ -1,0 +1,16 @@
+﻿{
+  "name": "day-15-demo-pipeline",
+  "continue_on_error": false,
+  "steps": [
+    {
+      "name": "python-version",
+      "command": ["python", "--version"],
+      "timeout_seconds": 10
+    },
+    {
+      "name": "working-tree-check",
+      "command": ["git", "status", "--short"],
+      "timeout_seconds": 10
+    }
+  ]
+}
