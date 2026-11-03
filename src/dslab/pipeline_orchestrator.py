@@ -1,4 +1,4 @@
-﻿"""Run a configured sequence of subprocess steps and write a JSON summary."""
+"""Run a configured sequence of subprocess steps and write a JSON summary."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ from typing import Any
 def load_config(path: Path) -> dict[str, Any]:
     """Load and validate the pipeline configuration."""
     try:
-        config = json.loads(path.read_text(encoding="utf-8"))
+        config = json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"Cannot read configuration: {exc}") from exc
 
@@ -26,7 +26,7 @@ def load_config(path: Path) -> dict[str, Any]:
     names: set[str] = set()
     for index, step in enumerate(steps):
         if not isinstance(step, dict):
-            raise ValueError(f"Step {index + 1} must be an object.")
+            raise TypeError(f"Step {index + 1} must be an object.")
         name = step.get("name")
         command = step.get("command")
         if not isinstance(name, str) or not name.strip():
