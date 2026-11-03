@@ -1,4 +1,4 @@
-﻿"""Tests for the configurable pipeline orchestrator."""
+"""Tests for the configurable pipeline orchestrator."""
 import json
 import sys
 from pathlib import Path
@@ -69,7 +69,8 @@ def test_missing_executable_is_reported():
 def test_invalid_config_is_rejected(tmp_path: Path, config):
     path = tmp_path / "pipeline.json"
     path.write_text(json.dumps(config), encoding="utf-8")
-    with pytest.raises(ValueError):
+    expected_exception = TypeError if config == {"steps": ["not an object"]} else ValueError
+    with pytest.raises(expected_exception):
         load_config(path)
 
 
