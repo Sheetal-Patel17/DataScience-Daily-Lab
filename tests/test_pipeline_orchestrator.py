@@ -95,3 +95,111 @@ def test_cli_returns_failure_for_failed_step(tmp_path: Path):
     config.write_text(json.dumps({"steps": [step("bad", "raise SystemExit(2)")]}), encoding="utf-8")
     assert main(["--config", str(config), "--output", str(output)]) == 1
     assert json.loads(output.read_text(encoding="utf-8"))["status"] == "failed"
+
+
+def test_pipeline_environment_is_available_to_steps():
+    report = run_pipeline({
+        "environment": {"DSLAB_PIPELINE_VALUE": "shared"},
+        "steps": [
+            step(
+                "read-environment",
+                "import os; print(os.environ['DSLAB_PIPELINE_VALUE'])",
+            )
+        ],
+    })
+
+    assert report["status"] == "passed"
+    assert report["results"][0]["stdout"].strip() == "shared"
+
+
+def test_step_environment_overrides_pipeline_environment():
+    report = run_pipeline({
+        "environment": {"DSLAB_VALUE": "pipeline"},
+        "steps": [
+            step(
+                "override",
+                "import os; print(os.environ['DSLAB_VALUE'])",
+                environment={"DSLAB_VALUE": "step"},
+            )
+        ],
+    })
+
+    assert report["results"][0]["stdout"].strip() == "step"
+
+
+def test_step_environment_preserves_pipeline_variables():
+    report = run_pipeline({
+        "environment": {"DSLAB_SHARED": "available"},
+        "steps": [
+            step(
+                "combined",
+                (
+                    "import os; "
+                    "print(os.environ['DSLAB_SHARED'] + '-' "
+                    "+ os.environ['DSLAB_LOCAL'])"
+                ),
+                environment={"DSLAB_LOCAL": "local"},
+            )
+        ],
+    })
+
+    assert report["results"][0]["stdout"].strip() == "available-local"
+
+
+def test_invalid_pipeline_environment_is_rejected(tmp_path):
+    path = tmp_path / "pipeline.json"
+    path.write_text(
+        json.dumps({
+            "environment": ["NOT", "A", "MAPPING"],
+            "steps": [{"name": "ok", "command": ["echo", "ok"]}],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match="Pipeline environment"):
+        load_config(path)
+
+
+def test_non_string_environment_value_is_rejected(tmp_path):
+    path = tmp_path / "pipeline.json"
+    path.write_text(
+        json.dumps({
+            "environment": {"DSLAB_VALUE": 123},
+            "steps": [{"name": "ok", "command": ["echo", "ok"]}],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match="values must be strings"):
+        load_config(path)
+
+
+def test_invalid_step_environment_is_rejected(tmp_path):
+    path = tmp_path / "pipeline.json"
+    path.write_text(
+        json.dumps({
+            "steps": [{
+                "name": "invalid-env",
+                "command": ["echo", "ok"],
+                "environment": "NOT A MAPPING",
+            }],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match="Step 'invalid-env' environment"):
+        load_config(path)
+
+
+def test_empty_environment_key_is_rejected(tmp_path):
+    path = tmp_path / "pipeline.json"
+    path.write_text(
+        json.dumps({
+            "environment": {"": "invalid"},
+            "steps": [{"name": "ok", "command": ["echo", "ok"]}],
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="keys must be non-empty"):
+        load_config(path)

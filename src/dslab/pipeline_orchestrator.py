@@ -1,13 +1,29 @@
-"""Run a configured sequence of subprocess steps and write a JSON summary."""
+﻿"""Run a configured sequence of subprocess steps and write a JSON summary."""
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+
+def _validate_environment(environment: Any, label: str) -> None:
+    """Validate environment-variable mappings."""
+    if environment is None:
+        return
+
+    if not isinstance(environment, dict):
+        raise TypeError(f"{label} must be an object.")
+
+    for key, value in environment.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError(f"{label} keys must be non-empty strings.")
+        if not isinstance(value, str):
+            raise TypeError(f"{label} values must be strings.")
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -19,30 +35,54 @@ def load_config(path: Path) -> dict[str, Any]:
 
     if not isinstance(config, dict):
         raise TypeError("Configuration must be a JSON object.")
+
+    _validate_environment(config.get("environment"), "Pipeline environment")
+
     steps = config.get("steps")
     if not isinstance(steps, list) or not steps:
         raise ValueError("'steps' must be a non-empty list.")
 
     names: set[str] = set()
+
     for index, step in enumerate(steps):
         if not isinstance(step, dict):
             raise TypeError(f"Step {index + 1} must be an object.")
+
         name = step.get("name")
         command = step.get("command")
+
         if not isinstance(name, str) or not name.strip():
             raise ValueError(f"Step {index + 1} needs a non-empty name.")
+
         if name in names:
             raise ValueError(f"Duplicate step name: {name}")
+
         names.add(name)
+
         if (
             not isinstance(command, list)
             or not command
             or any(not isinstance(part, str) or not part for part in command)
         ):
-            raise ValueError(f"Step '{name}' command must be a non-empty string list.")
+            raise ValueError(
+                f"Step '{name}' command must be a non-empty string list."
+            )
+
         timeout = step.get("timeout_seconds", 60)
-        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
-            raise ValueError(f"Step '{name}' timeout_seconds must be positive.")
+        if (
+            isinstance(timeout, bool)
+            or not isinstance(timeout, (int, float))
+            or timeout <= 0
+        ):
+            raise ValueError(
+                f"Step '{name}' timeout_seconds must be positive."
+            )
+
+        _validate_environment(
+            step.get("environment"),
+            f"Step '{name}' environment",
+        )
+
     return config
 
 
@@ -51,9 +91,14 @@ def run_pipeline(config: dict[str, Any]) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     pipeline_started = time.monotonic()
     stopped_early = False
+    pipeline_environment = os.environ.copy()
+    pipeline_environment.update(config.get("environment", {}))
 
     for step in config["steps"]:
         started = time.monotonic()
+        step_environment = pipeline_environment.copy()
+        step_environment.update(step.get("environment", {}))
+
         result: dict[str, Any] = {
             "name": step["name"],
             "command": step["command"],
@@ -64,6 +109,7 @@ def run_pipeline(config: dict[str, Any]) -> dict[str, Any]:
             "stderr": "",
             "error": None,
         }
+
         try:
             completed = subprocess.run(
                 step["command"],
@@ -72,6 +118,7 @@ def run_pipeline(config: dict[str, Any]) -> dict[str, Any]:
                 timeout=step.get("timeout_seconds", 60),
                 check=False,
                 shell=False,
+                env=step_environment,
             )
             result.update(
                 return_code=completed.returncode,
@@ -84,29 +131,47 @@ def run_pipeline(config: dict[str, Any]) -> dict[str, Any]:
                 status="timed_out",
                 stdout=_as_text(exc.stdout),
                 stderr=_as_text(exc.stderr),
-                error=f"Timed out after {step.get('timeout_seconds', 60)} seconds",
+                error=(
+                    f"Timed out after "
+                    f"{step.get('timeout_seconds', 60)} seconds"
+                ),
             )
         except OSError as exc:
             result.update(status="error", error=str(exc))
         finally:
-            result["duration_seconds"] = round(time.monotonic() - started, 4)
+            result["duration_seconds"] = round(
+                time.monotonic() - started, 4
+            )
 
         results.append(result)
-        if result["status"] != "passed" and not config.get("continue_on_error", False):
+
+        if (
+            result["status"] != "passed"
+            and not config.get("continue_on_error", False)
+        ):
             stopped_early = len(results) < len(config["steps"])
             break
 
     failed = sum(item["status"] != "passed" for item in results)
+
     return {
         "pipeline": config.get("name", "unnamed-pipeline"),
         "started_at_utc": datetime.now(UTC).isoformat(),
-        "status": "passed" if failed == 0 and len(results) == len(config["steps"]) else "failed",
+        "status": (
+            "passed"
+            if failed == 0 and len(results) == len(config["steps"])
+            else "failed"
+        ),
         "steps_total": len(config["steps"]),
         "steps_run": len(results),
-        "steps_passed": sum(item["status"] == "passed" for item in results),
+        "steps_passed": sum(
+            item["status"] == "passed" for item in results
+        ),
         "steps_failed": failed,
         "stopped_early": stopped_early,
-        "duration_seconds": round(time.monotonic() - pipeline_started, 4),
+        "duration_seconds": round(
+            time.monotonic() - pipeline_started, 4
+        ),
         "results": results,
     }
 
@@ -121,8 +186,18 @@ def _as_text(value: str | bytes | None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", required=True, type=Path, help="Pipeline JSON configuration")
-    parser.add_argument("--output", required=True, type=Path, help="JSON report destination")
+    parser.add_argument(
+        "--config",
+        required=True,
+        type=Path,
+        help="Pipeline JSON configuration",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        type=Path,
+        help="JSON report destination",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -133,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(report, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-    except (ValueError, OSError) as exc:
+    except (ValueError, TypeError, OSError) as exc:
         parser.error(str(exc))
 
     print(
@@ -146,9 +221,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
-
-
-
-
