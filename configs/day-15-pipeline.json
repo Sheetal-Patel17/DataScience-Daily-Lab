@@ -1,10 +1,27 @@
 ﻿{
   "name": "day-15-demo-pipeline",
   "continue_on_error": false,
+  "environment": {
+    "DSLAB_PIPELINE_MODE": "development",
+    "DSLAB_DATA_SOURCE": "sample"
+  },
   "steps": [
     {
       "name": "python-version",
       "command": ["python", "--version"],
+      "timeout_seconds": 10
+    },
+    {
+      "name": "environment-variable-demo",
+      "command": [
+        "python",
+        "-c",
+        "import os; print(os.environ['DSLAB_PIPELINE_MODE'], os.environ['DSLAB_STEP_LABEL'])"
+      ],
+      "environment": {
+        "DSLAB_PIPELINE_MODE": "step-specific",
+        "DSLAB_STEP_LABEL": "environment-demo"
+      },
       "timeout_seconds": 10
     },
     {
