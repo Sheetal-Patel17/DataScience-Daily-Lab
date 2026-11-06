@@ -350,3 +350,52 @@ def test_median_runtime_for_single_run():
     result = analyze_reports([report(duration=7)])
     assert result["pipeline_summaries"][0]["median_duration_seconds"] == 7.0
 
+
+def test_runtime_trend_detects_increased_runtime():
+    reports = [
+        report(duration=10),
+        report(duration=12),
+        report(duration=20),
+        report(duration=22),
+    ]
+    reports[0]["started_at_utc"] = "2026-11-01T10:00:00+00:00"
+    reports[1]["started_at_utc"] = "2026-11-02T10:00:00+00:00"
+    reports[2]["started_at_utc"] = "2026-11-03T10:00:00+00:00"
+    reports[3]["started_at_utc"] = "2026-11-04T10:00:00+00:00"
+
+    result = analyze_reports(reports)
+    trend = result["pipeline_summaries"][0]["runtime_trend"]
+
+    assert trend["direction"] == "increased"
+    assert trend["earlier_average_seconds"] == 11.0
+    assert trend["recent_average_seconds"] == 21.0
+    assert trend["change_percent"] == 90.9091
+    assert trend["runs_compared"] == 4
+
+
+def test_runtime_trend_detects_decreased_runtime():
+    reports = [
+        report(duration=20),
+        report(duration=18),
+        report(duration=10),
+        report(duration=8),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    trend = result["pipeline_summaries"][0]["runtime_trend"]
+
+    assert trend["direction"] == "decreased"
+    assert trend["change_percent"] == -52.6316
+
+
+def test_runtime_trend_handles_insufficient_timestamps():
+    result = analyze_reports([report(duration=5)])
+    trend = result["pipeline_summaries"][0]["runtime_trend"]
+
+    assert trend["direction"] == "insufficient_data"
+    assert trend["change_percent"] is None
+    assert trend["runs_compared"] == 1
