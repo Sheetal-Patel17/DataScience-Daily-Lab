@@ -31,6 +31,26 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
     ):
         raise ValueError(f"{source}: duration_seconds must be non-negative.")
 
+    started_at = report.get("started_at_utc")
+    if started_at is not None:
+        if not isinstance(started_at, str):
+            raise TypeError(f"{source}: started_at_utc must be a string.")
+
+        try:
+            parsed_timestamp = datetime.fromisoformat(started_at)
+        except ValueError as exc:
+            raise ValueError(
+                f"{source}: started_at_utc must be a valid ISO 8601 timestamp."
+            ) from exc
+
+        if (
+            parsed_timestamp.tzinfo is None
+            or parsed_timestamp.utcoffset() is None
+        ):
+            raise ValueError(
+                f"{source}: started_at_utc must include timezone information."
+            )
+
     counts = ("steps_total", "steps_passed", "steps_failed")
     for field in counts:
         value = report.get(field)

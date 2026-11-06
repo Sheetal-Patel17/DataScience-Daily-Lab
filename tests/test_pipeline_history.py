@@ -128,3 +128,37 @@ def test_analysis_output_includes_versioned_metadata():
     assert result["analysis_metadata"]["source_report_count"] == 2
     generated_at = result["analysis_metadata"]["generated_at_utc"]
     assert generated_at.endswith("+00:00")
+
+
+@pytest.mark.parametrize(
+    ("timestamp", "expected_exception"),
+    [
+        ("not-a-timestamp", ValueError),
+        ("2026-11-06T10:00:00", ValueError),
+        (12345, TypeError),
+    ],
+)
+def test_invalid_started_at_utc_is_rejected(timestamp, expected_exception):
+    item = report()
+    item["started_at_utc"] = timestamp
+
+    with pytest.raises(expected_exception):
+        analyze_reports([item])
+
+
+def test_started_at_utc_accepts_z_suffix():
+    item = report()
+    item["started_at_utc"] = "2026-11-06T10:00:00Z"
+
+    result = analyze_reports([item])
+
+    assert result["run_history"][0]["started_at_utc"].endswith("Z")
+
+
+def test_missing_started_at_utc_is_supported():
+    item = report()
+    item.pop("started_at_utc")
+
+    result = analyze_reports([item])
+
+    assert result["run_history"][0]["started_at_utc"] is None
