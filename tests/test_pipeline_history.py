@@ -119,3 +119,12 @@ def test_cli_writes_report(tmp_path: Path):
     assert main(["--input-dir", str(source), "--output", str(output)]) == 0
     saved = json.loads(output.read_text(encoding="utf-8"))
     assert saved["runs_analyzed"] == 1
+
+
+def test_analysis_output_includes_versioned_metadata():
+    result = analyze_reports([report(), report(status="failed")])
+
+    assert result["schema_version"] == 1
+    assert result["analysis_metadata"]["source_report_count"] == 2
+    generated_at = result["analysis_metadata"]["generated_at_utc"]
+    assert generated_at.endswith("+00:00")

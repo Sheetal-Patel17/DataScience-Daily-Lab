@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 from collections import Counter, defaultdict
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -129,6 +130,11 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
 
     successful = sum(run["status"] == "passed" for run in reports)
     return {
+        "schema_version": 1,
+        "analysis_metadata": {
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+            "source_report_count": len(reports),
+        },
         "report_type": "pipeline-history-analysis",
         "runs_analyzed": len(reports),
         "pipelines_analyzed": len(summaries),
