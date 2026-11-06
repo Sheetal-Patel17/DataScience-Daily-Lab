@@ -74,15 +74,18 @@ def test_invalid_reports_are_rejected(item):
         analyze_reports([item])
 
 
-@pytest.mark.parametrize("item", [
-    "not an object",
-    {**report(), "results": "not a list"},
-    {**report(), "results": ["not an object"]},
-    {**report(), "results": [{"status": "passed"}]},
-    {**report(), "results": [{"name": "step"}]},
-])
-def test_invalid_report_types_are_rejected(item):
-    with pytest.raises(TypeError):
+@pytest.mark.parametrize(
+    ("item", "expected_exception"),
+    [
+        ("not an object", TypeError),
+        ({**report(), "results": "not a list"}, TypeError),
+        ({**report(), "results": ["not an object"]}, TypeError),
+        ({**report(), "results": [{"status": "passed"}]}, ValueError),
+        ({**report(), "results": [{"name": "step"}]}, ValueError),
+    ],
+)
+def test_invalid_report_types_are_rejected(item, expected_exception):
+    with pytest.raises(expected_exception):
         analyze_reports([item])
 
 

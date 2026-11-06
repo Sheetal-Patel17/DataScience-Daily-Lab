@@ -47,14 +47,18 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
         if not isinstance(result, dict):
             raise TypeError(f"{source}: result {index + 1} must be an object.")
         name = result.get("name")
+        if name is None:
+            raise ValueError(f"{source}: result {index + 1} needs a name.")
         if not isinstance(name, str):
             raise TypeError(f"{source}: result {index + 1} name must be a string.")
         if not name.strip():
             raise ValueError(f"{source}: result {index + 1} needs a name.")
 
-        if not isinstance(result.get("status"), str):
-            raise TypeError(f"{source}: result {index + 1} needs a status.")
-
+        status = result.get("status")
+        if status is None:
+            raise ValueError(f"{source}: result {index + 1} needs a status.")
+        if not isinstance(status, str):
+            raise TypeError(f"{source}: result {index + 1} status must be a string.")
     return report
 
 
