@@ -383,6 +383,23 @@ def analyze_reports(
     ]
     history.sort(key=lambda item: (item["started_at_utc"] or "", item["pipeline"]))
 
+    regression_summary = {
+        "pipelines_with_runtime_regression": [
+            item["pipeline"]
+            for item in summaries
+            if item["regression_flags"]["runtime_regression"]
+        ],
+        "pipelines_with_success_rate_regression": [
+            item["pipeline"]
+            for item in summaries
+            if item["regression_flags"]["success_rate_regression"]
+        ],
+        "total_alerts": sum(
+            len(item["regression_flags"]["alerts"])
+            for item in summaries
+        ),
+    }
+
     successful = sum(run["status"] == "passed" for run in selected_reports)
     return {
         "schema_version": 1,
@@ -398,6 +415,7 @@ def analyze_reports(
         "runs_analyzed": len(selected_reports),
         "pipelines_analyzed": len(summaries),
         "overall_success_rate_percent": round(successful / len(selected_reports) * 100, 2),
+        "regression_summary": regression_summary,
         "pipeline_summaries": summaries,
         "step_failure_frequency": [
             {"step": name, "failures": count}

@@ -607,3 +607,40 @@ def test_cli_rejects_unknown_regression_config_setting(tmp_path):
         assert exc.code == 2
     else:
         raise AssertionError("Expected CLI to reject unknown config setting.")
+
+
+def test_report_includes_aggregate_regression_summary():
+    reports = []
+
+    # Pipeline alpha: runtime increases by 30%.
+    for index, duration in enumerate([10, 10, 13, 13], start=1):
+        item = report(pipeline="alpha", duration=duration)
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+        reports.append(item)
+
+    # Pipeline beta: success rate falls from 100% to 0%.
+    statuses = ["passed", "passed", "failed", "failed"]
+    for index, status in enumerate(statuses, start=1):
+        item = report(pipeline="beta", status=status)
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+        reports.append(item)
+
+    result = analyze_reports(reports)
+    summary = result["regression_summary"]
+
+    assert summary["pipelines_with_runtime_regression"] == ["alpha"]
+    assert summary["pipelines_with_success_rate_regression"] == ["beta"]
+    assert summary["total_alerts"] == 2
+
+
+def test_report_aggregate_regression_summary_is_empty_without_alerts():
+    result = analyze_reports([report()])
+    summary = result["regression_summary"]
+
+    assert summary["pipelines_with_runtime_regression"] == []
+    assert summary["pipelines_with_success_rate_regression"] == []
+    assert summary["total_alerts"] == 0
