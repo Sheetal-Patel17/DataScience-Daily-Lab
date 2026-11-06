@@ -162,3 +162,59 @@ def test_missing_started_at_utc_is_supported():
     result = analyze_reports([item])
 
     assert result["run_history"][0]["started_at_utc"] is None
+
+
+
+def test_duplicate_run_id_is_rejected():
+    first = report()
+    second = report()
+    first["run_id"] = "run-123"
+    second["run_id"] = "run-123"
+
+    with pytest.raises(ValueError, match="Duplicate pipeline run ID"):
+        analyze_reports([first, second])
+
+def test_same_pipeline_at_different_times_is_allowed():
+    first = report()
+    second = report()
+    second["started_at_utc"] = "2026-11-06T10:00:00+00:00"
+
+    result = analyze_reports([first, second])
+
+    assert result["runs_analyzed"] == 2
+
+
+def test_different_pipelines_at_same_time_are_allowed():
+    result = analyze_reports([report("alpha"), report("beta")])
+
+    assert result["runs_analyzed"] == 2
+
+
+
+def test_same_timestamp_with_different_run_ids_is_allowed():
+    first = report()
+    second = report()
+    first["run_id"] = "run-123"
+    second["run_id"] = "run-456"
+
+    result = analyze_reports([first, second])
+
+    assert result["runs_analyzed"] == 2
+
+
+def test_invalid_run_id_is_rejected():
+    item = report()
+    item["run_id"] = " "
+
+    with pytest.raises(ValueError, match="run_id must not be empty"):
+        analyze_reports([item])
+
+def test_reports_without_timestamps_are_not_deduplicated():
+    first = report()
+    second = report()
+    first.pop("started_at_utc")
+    second.pop("started_at_utc")
+
+    result = analyze_reports([first, second])
+
+    assert result["runs_analyzed"] == 2

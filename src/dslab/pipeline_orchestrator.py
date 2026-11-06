@@ -9,6 +9,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 
 def _validate_environment(environment: Any, label: str) -> None:
@@ -155,6 +156,7 @@ def run_pipeline(config: dict[str, Any]) -> dict[str, Any]:
     failed = sum(item["status"] != "passed" for item in results)
 
     return {
+        "run_id": str(uuid4()),
         "pipeline": config.get("name", "unnamed-pipeline"),
         "started_at_utc": datetime.now(UTC).isoformat(),
         "status": (

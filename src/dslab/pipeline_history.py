@@ -51,6 +51,13 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
                 f"{source}: started_at_utc must include timezone information."
             )
 
+    run_id = report.get("run_id")
+    if run_id is not None:
+        if not isinstance(run_id, str):
+            raise TypeError(f"{source}: run_id must be a string.")
+        if not run_id.strip():
+            raise ValueError(f"{source}: run_id must not be empty.")
+
     counts = ("steps_total", "steps_passed", "steps_failed")
     for field in counts:
         value = report.get(field)
@@ -83,6 +90,12 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
     return report
 
 
+def _run_identity(report: dict[str, Any]) -> str | None:
+    """Return the unique ID of a pipeline run when available."""
+    return report.get("run_id")
+
+
+
 def load_reports(input_dir: Path) -> list[dict[str, Any]]:
     """Load and validate all JSON reports in a directory."""
     if not input_dir.exists() or not input_dir.is_dir():
@@ -109,9 +122,20 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
 
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     failures: Counter[str] = Counter()
+    seen_runs: set[str] = set()
 
-    for report in reports:
+    for index, report in enumerate(reports, start=1):
         validate_report(report)
+        identity = _run_identity(report)
+
+        if identity is not None:
+            if identity in seen_runs:
+                raise ValueError(
+                    f"Duplicate pipeline run ID detected at report {index}: "
+                    f"{identity}."
+                )
+            seen_runs.add(identity)
+
         groups[report["pipeline"]].append(report)
         for result in report.get("results", []):
             if result["status"] != "passed":
