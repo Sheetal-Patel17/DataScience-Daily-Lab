@@ -115,10 +115,19 @@ def load_reports(input_dir: Path) -> list[dict[str, Any]]:
     return reports
 
 
-def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
+def analyze_reports(
+    reports: list[dict[str, Any]],
+    pipeline_names: set[str] | None = None,
+) -> dict[str, Any]:
     """Calculate reliability, runtime, and failed-step statistics."""
     if not reports:
         raise ValueError("At least one pipeline report is required.")
+
+    if pipeline_names is not None:
+        if not isinstance(pipeline_names, set) or not pipeline_names:
+            raise ValueError("pipeline_names must be a non-empty set.")
+        if any(not isinstance(name, str) or not name.strip() for name in pipeline_names):
+            raise ValueError("Pipeline names must be non-empty strings.")
 
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     failures: Counter[str] = Counter()
@@ -136,10 +145,21 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
                 )
             seen_runs.add(identity)
 
+        if pipeline_names is not None and report["pipeline"] not in pipeline_names:
+            continue
+
         groups[report["pipeline"]].append(report)
         for result in report.get("results", []):
             if result["status"] != "passed":
                 failures[f"{report['pipeline']}/{result['name']}"] += 1
+
+    if not groups:
+        raise ValueError("No reports matched the selected pipeline names.")
+
+    selected_reports = [
+        report for report in reports
+        if report["pipeline"] in groups
+    ]
 
     summaries = []
     for pipeline, runs in sorted(groups.items()):
@@ -168,21 +188,23 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
             "steps_passed": run["steps_passed"],
             "steps_failed": run["steps_failed"],
         }
-        for run in reports
+        for run in selected_reports
     ]
     history.sort(key=lambda item: (item["started_at_utc"] or "", item["pipeline"]))
 
-    successful = sum(run["status"] == "passed" for run in reports)
+    successful = sum(run["status"] == "passed" for run in selected_reports)
     return {
         "schema_version": 1,
         "analysis_metadata": {
             "generated_at_utc": datetime.now(UTC).isoformat(),
             "source_report_count": len(reports),
+            "analyzed_report_count": len(selected_reports),
+            "selected_pipeline_names": sorted(groups),
         },
         "report_type": "pipeline-history-analysis",
-        "runs_analyzed": len(reports),
+        "runs_analyzed": len(selected_reports),
         "pipelines_analyzed": len(summaries),
-        "overall_success_rate_percent": round(successful / len(reports) * 100, 2),
+        "overall_success_rate_percent": round(successful / len(selected_reports) * 100, 2),
         "pipeline_summaries": summaries,
         "step_failure_frequency": [
             {"step": name, "failures": count}

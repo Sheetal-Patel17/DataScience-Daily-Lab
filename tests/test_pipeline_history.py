@@ -218,3 +218,51 @@ def test_reports_without_timestamps_are_not_deduplicated():
     result = analyze_reports([first, second])
 
     assert result["runs_analyzed"] == 2
+
+
+def test_pipeline_filter_selects_only_requested_pipeline():
+    reports = [
+        report("alpha"),
+        report("beta", status="failed"),
+        report("alpha"),
+    ]
+
+    result = analyze_reports(reports, pipeline_names={"alpha"})
+
+    assert result["runs_analyzed"] == 2
+    assert result["pipelines_analyzed"] == 1
+    assert result["pipeline_summaries"][0]["pipeline"] == "alpha"
+    assert result["overall_success_rate_percent"] == 100.0
+    assert result["analysis_metadata"]["source_report_count"] == 3
+    assert result["analysis_metadata"]["analyzed_report_count"] == 2
+
+
+def test_pipeline_filter_supports_multiple_names():
+    reports = [
+        report("alpha"),
+        report("beta"),
+        report("gamma"),
+    ]
+
+    result = analyze_reports(reports, pipeline_names={"alpha", "gamma"})
+
+    assert result["runs_analyzed"] == 2
+    assert result["analysis_metadata"]["selected_pipeline_names"] == [
+        "alpha", "gamma"
+    ]
+
+
+def test_pipeline_filter_rejects_unknown_names():
+    with pytest.raises(ValueError, match="No reports matched"):
+        analyze_reports([report("alpha")], pipeline_names={"missing"})
+
+
+def test_pipeline_filter_rejects_empty_selection():
+    with pytest.raises(ValueError, match="non-empty set"):
+        analyze_reports([report()], pipeline_names=set())
+
+
+def test_pipeline_filter_rejects_invalid_names():
+    with pytest.raises(ValueError, match="non-empty strings"):
+        analyze_reports([report()], pipeline_names={""})
+
