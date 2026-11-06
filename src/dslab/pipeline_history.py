@@ -5,7 +5,9 @@ import argparse
 import json
 import math
 from collections import Counter, defaultdict
+from datetime import UTC, date, datetime
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 
@@ -29,6 +31,33 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
         or duration < 0
     ):
         raise ValueError(f"{source}: duration_seconds must be non-negative.")
+
+    started_at = report.get("started_at_utc")
+    if started_at is not None:
+        if not isinstance(started_at, str):
+            raise TypeError(f"{source}: started_at_utc must be a string.")
+
+        try:
+            parsed_timestamp = datetime.fromisoformat(started_at)
+        except ValueError as exc:
+            raise ValueError(
+                f"{source}: started_at_utc must be a valid ISO 8601 timestamp."
+            ) from exc
+
+        if (
+            parsed_timestamp.tzinfo is None
+            or parsed_timestamp.utcoffset() is None
+        ):
+            raise ValueError(
+                f"{source}: started_at_utc must include timezone information."
+            )
+
+    run_id = report.get("run_id")
+    if run_id is not None:
+        if not isinstance(run_id, str):
+            raise TypeError(f"{source}: run_id must be a string.")
+        if not run_id.strip():
+            raise ValueError(f"{source}: run_id must not be empty.")
 
     counts = ("steps_total", "steps_passed", "steps_failed")
     for field in counts:
@@ -62,6 +91,12 @@ def validate_report(report: Any, source: str = "report") -> dict[str, Any]:
     return report
 
 
+def _run_identity(report: dict[str, Any]) -> str | None:
+    """Return the unique ID of a pipeline run when available."""
+    return report.get("run_id")
+
+
+
 def load_reports(input_dir: Path) -> list[dict[str, Any]]:
     """Load and validate all JSON reports in a directory."""
     if not input_dir.exists() or not input_dir.is_dir():
@@ -81,20 +116,233 @@ def load_reports(input_dir: Path) -> list[dict[str, Any]]:
     return reports
 
 
-def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
+def _runtime_trend(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compare average runtime in the earlier and recent halves of history."""
+    timestamped = [
+        item for item in reports
+        if item.get("started_at_utc") is not None
+    ]
+    timestamped.sort(
+        key=lambda item: datetime.fromisoformat(
+            item["started_at_utc"]
+        ).astimezone(UTC)
+    )
+
+    if len(timestamped) < 2:
+        return {
+            "direction": "insufficient_data",
+            "earlier_average_seconds": None,
+            "recent_average_seconds": None,
+            "change_percent": None,
+            "runs_compared": len(timestamped),
+        }
+
+    split_index = len(timestamped) // 2
+    earlier = timestamped[:split_index]
+    recent = timestamped[split_index:]
+
+    earlier_average = sum(
+        item["duration_seconds"] for item in earlier
+    ) / len(earlier)
+    recent_average = sum(
+        item["duration_seconds"] for item in recent
+    ) / len(recent)
+
+    if earlier_average == 0:
+        change_percent = 0.0 if recent_average == 0 else None
+    else:
+        change_percent = (
+            (recent_average - earlier_average) / earlier_average
+        ) * 100
+
+    if recent_average > earlier_average:
+        direction = "increased"
+    elif recent_average < earlier_average:
+        direction = "decreased"
+    else:
+        direction = "unchanged"
+
+    return {
+        "direction": direction,
+        "earlier_average_seconds": round(earlier_average, 4),
+        "recent_average_seconds": round(recent_average, 4),
+        "change_percent": (
+            round(change_percent, 4)
+            if change_percent is not None else None
+        ),
+        "runs_compared": len(timestamped),
+    }
+
+
+def _success_rate_trend(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compare success rates across the earlier and recent halves."""
+    timestamped = [
+        item for item in reports
+        if item.get("started_at_utc") is not None
+    ]
+    timestamped.sort(
+        key=lambda item: datetime.fromisoformat(
+            item["started_at_utc"]
+        ).astimezone(UTC)
+    )
+
+    if len(timestamped) < 2:
+        return {
+            "direction": "insufficient_data",
+            "earlier_success_rate_percent": None,
+            "recent_success_rate_percent": None,
+            "change_percentage_points": None,
+            "runs_compared": len(timestamped),
+        }
+
+    split_index = len(timestamped) // 2
+    earlier = timestamped[:split_index]
+    recent = timestamped[split_index:]
+
+    earlier_rate = (
+        sum(item["status"] == "passed" for item in earlier)
+        / len(earlier)
+    ) * 100
+    recent_rate = (
+        sum(item["status"] == "passed" for item in recent)
+        / len(recent)
+    ) * 100
+
+    change = recent_rate - earlier_rate
+
+    if change > 0:
+        direction = "improved"
+    elif change < 0:
+        direction = "declined"
+    else:
+        direction = "unchanged"
+
+    return {
+        "direction": direction,
+        "earlier_success_rate_percent": round(earlier_rate, 4),
+        "recent_success_rate_percent": round(recent_rate, 4),
+        "change_percentage_points": round(change, 4),
+        "runs_compared": len(timestamped),
+    }
+
+
+def _regression_flags(
+    reports: list[dict[str, Any]],
+    runtime_threshold: float,
+    success_threshold: float,
+) -> dict[str, Any]:
+    """Flag runtime and reliability regressions using configured thresholds."""
+    runtime_trend = _runtime_trend(reports)
+    success_trend = _success_rate_trend(reports)
+
+    runtime_change = runtime_trend["change_percent"]
+    success_change = success_trend["change_percentage_points"]
+
+    runtime_regression = (
+        runtime_change is not None
+        and runtime_change >= runtime_threshold
+    )
+    success_regression = (
+        success_change is not None
+        and success_change <= -success_threshold
+    )
+
+    alerts = []
+    if runtime_regression:
+        alerts.append("runtime_increase")
+    if success_regression:
+        alerts.append("success_rate_decline")
+
+    return {
+        "runtime_regression": runtime_regression,
+        "success_rate_regression": success_regression,
+        "runtime_threshold_percent": runtime_threshold,
+        "success_rate_threshold_points": success_threshold,
+        "alerts": alerts,
+    }
+
+
+def analyze_reports(
+    reports: list[dict[str, Any]],
+    pipeline_names: set[str] | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    runtime_regression_threshold_percent: float = 20.0,
+    success_rate_regression_threshold_points: float = 10.0,
+) -> dict[str, Any]:
     """Calculate reliability, runtime, and failed-step statistics."""
     if not reports:
         raise ValueError("At least one pipeline report is required.")
 
+    if pipeline_names is not None:
+        if not isinstance(pipeline_names, set) or not pipeline_names:
+            raise ValueError("pipeline_names must be a non-empty set.")
+        if any(not isinstance(name, str) or not name.strip() for name in pipeline_names):
+            raise ValueError("Pipeline names must be non-empty strings.")
+
+    try:
+        parsed_start = date.fromisoformat(start_date) if start_date else None
+        parsed_end = date.fromisoformat(end_date) if end_date else None
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Dates must use YYYY-MM-DD format.") from exc
+
+    if parsed_start and parsed_end and parsed_start > parsed_end:
+        raise ValueError("start_date cannot be later than end_date.")
+
+
+    thresholds = {
+        "runtime_regression_threshold_percent":
+            runtime_regression_threshold_percent,
+        "success_rate_regression_threshold_points":
+            success_rate_regression_threshold_points,
+    }
+    for name, threshold in thresholds.items():
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (int, float))
+            or not math.isfinite(threshold)
+            or threshold < 0
+        ):
+            raise ValueError(f"{name} must be a finite non-negative number.")
+
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     failures: Counter[str] = Counter()
+    seen_runs: set[str] = set()
+    selected_reports: list[dict[str, Any]] = []
 
-    for report in reports:
+    for index, report in enumerate(reports, start=1):
         validate_report(report)
+        identity = _run_identity(report)
+
+        if identity is not None:
+            if identity in seen_runs:
+                raise ValueError(
+                    f"Duplicate pipeline run ID detected at report {index}: "
+                    f"{identity}."
+                )
+            seen_runs.add(identity)
+
+        if pipeline_names is not None and report["pipeline"] not in pipeline_names:
+            continue
+
+        timestamp = report.get("started_at_utc")
+        if parsed_start or parsed_end:
+            if timestamp is None:
+                continue
+            run_date = datetime.fromisoformat(timestamp).astimezone(UTC).date()
+            if parsed_start and run_date < parsed_start:
+                continue
+            if parsed_end and run_date > parsed_end:
+                continue
+
+        selected_reports.append(report)
         groups[report["pipeline"]].append(report)
         for result in report.get("results", []):
             if result["status"] != "passed":
                 failures[f"{report['pipeline']}/{result['name']}"] += 1
+
+    if not groups:
+        raise ValueError("No reports matched the selected pipeline names.")
 
     summaries = []
     for pipeline, runs in sorted(groups.items()):
@@ -107,6 +355,14 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
             "failed_runs": len(runs) - successes,
             "success_rate_percent": round(successes / len(runs) * 100, 2),
             "average_duration_seconds": round(sum(durations) / len(durations), 4),
+            "median_duration_seconds": round(median(durations), 4),
+            "runtime_trend": _runtime_trend(groups[pipeline]),
+            "success_rate_trend": _success_rate_trend(groups[pipeline]),
+            "regression_flags": _regression_flags(
+                groups[pipeline],
+                runtime_regression_threshold_percent,
+                success_rate_regression_threshold_points,
+            ),
             "maximum_duration_seconds": round(max(durations), 4),
             "total_steps": sum(run["steps_total"] for run in runs),
             "total_passed_steps": sum(run["steps_passed"] for run in runs),
@@ -123,16 +379,43 @@ def analyze_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
             "steps_passed": run["steps_passed"],
             "steps_failed": run["steps_failed"],
         }
-        for run in reports
+        for run in selected_reports
     ]
     history.sort(key=lambda item: (item["started_at_utc"] or "", item["pipeline"]))
 
-    successful = sum(run["status"] == "passed" for run in reports)
+    regression_summary = {
+        "pipelines_with_runtime_regression": [
+            item["pipeline"]
+            for item in summaries
+            if item["regression_flags"]["runtime_regression"]
+        ],
+        "pipelines_with_success_rate_regression": [
+            item["pipeline"]
+            for item in summaries
+            if item["regression_flags"]["success_rate_regression"]
+        ],
+        "total_alerts": sum(
+            len(item["regression_flags"]["alerts"])
+            for item in summaries
+        ),
+    }
+
+    successful = sum(run["status"] == "passed" for run in selected_reports)
     return {
+        "schema_version": 1,
+        "analysis_metadata": {
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+            "source_report_count": len(reports),
+            "analyzed_report_count": len(selected_reports),
+            "selected_pipeline_names": sorted(groups),
+            "start_date": start_date,
+            "end_date": end_date,
+        },
         "report_type": "pipeline-history-analysis",
-        "runs_analyzed": len(reports),
+        "runs_analyzed": len(selected_reports),
         "pipelines_analyzed": len(summaries),
-        "overall_success_rate_percent": round(successful / len(reports) * 100, 2),
+        "overall_success_rate_percent": round(successful / len(selected_reports) * 100, 2),
+        "regression_summary": regression_summary,
         "pipeline_summaries": summaries,
         "step_failure_frequency": [
             {"step": name, "failures": count}
@@ -146,11 +429,36 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--config", type=Path, help="Optional JSON regression threshold configuration.")
     args = parser.parse_args(argv)
 
     try:
+        config = {}
+        if args.config:
+            config = json.loads(args.config.read_text(encoding="utf-8-sig"))
+            if not isinstance(config, dict):
+                raise ValueError("Regression config must contain a JSON object.")
+
+            allowed_keys = {
+                "runtime_regression_threshold_percent",
+                "success_rate_regression_threshold_points",
+            }
+            unknown_keys = set(config) - allowed_keys
+            if unknown_keys:
+                raise ValueError(
+                    f"Unknown regression config settings: {sorted(unknown_keys)}"
+                )
+
         reports = load_reports(args.input_dir)
-        analysis = analyze_reports(reports)
+        analysis = analyze_reports(
+            reports,
+            runtime_regression_threshold_percent=config.get(
+                "runtime_regression_threshold_percent", 20.0
+            ),
+            success_rate_regression_threshold_points=config.get(
+                "success_rate_regression_threshold_points", 10.0
+            ),
+        )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
             json.dumps(analysis, indent=2, ensure_ascii=False) + "\n",

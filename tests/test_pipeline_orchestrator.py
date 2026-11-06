@@ -203,3 +203,14 @@ def test_empty_environment_key_is_rejected(tmp_path):
 
     with pytest.raises(ValueError, match="keys must be non-empty"):
         load_config(path)
+
+
+def test_each_pipeline_run_gets_a_unique_run_id():
+    config = {"name": "identity-test", "steps": [step("ok")]}
+
+    first = run_pipeline(config)
+    second = run_pipeline(config)
+
+    assert first["run_id"]
+    assert second["run_id"]
+    assert first["run_id"] != second["run_id"]
