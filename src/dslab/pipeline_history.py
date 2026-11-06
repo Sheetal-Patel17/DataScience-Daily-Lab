@@ -226,11 +226,49 @@ def _success_rate_trend(reports: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _regression_flags(
+    reports: list[dict[str, Any]],
+    runtime_threshold: float,
+    success_threshold: float,
+) -> dict[str, Any]:
+    """Flag runtime and reliability regressions using configured thresholds."""
+    runtime_trend = _runtime_trend(reports)
+    success_trend = _success_rate_trend(reports)
+
+    runtime_change = runtime_trend["change_percent"]
+    success_change = success_trend["change_percentage_points"]
+
+    runtime_regression = (
+        runtime_change is not None
+        and runtime_change >= runtime_threshold
+    )
+    success_regression = (
+        success_change is not None
+        and success_change <= -success_threshold
+    )
+
+    alerts = []
+    if runtime_regression:
+        alerts.append("runtime_increase")
+    if success_regression:
+        alerts.append("success_rate_decline")
+
+    return {
+        "runtime_regression": runtime_regression,
+        "success_rate_regression": success_regression,
+        "runtime_threshold_percent": runtime_threshold,
+        "success_rate_threshold_points": success_threshold,
+        "alerts": alerts,
+    }
+
+
 def analyze_reports(
     reports: list[dict[str, Any]],
     pipeline_names: set[str] | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    runtime_regression_threshold_percent: float = 20.0,
+    success_rate_regression_threshold_points: float = 10.0,
 ) -> dict[str, Any]:
     """Calculate reliability, runtime, and failed-step statistics."""
     if not reports:
@@ -250,6 +288,22 @@ def analyze_reports(
 
     if parsed_start and parsed_end and parsed_start > parsed_end:
         raise ValueError("start_date cannot be later than end_date.")
+
+
+    thresholds = {
+        "runtime_regression_threshold_percent":
+            runtime_regression_threshold_percent,
+        "success_rate_regression_threshold_points":
+            success_rate_regression_threshold_points,
+    }
+    for name, threshold in thresholds.items():
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (int, float))
+            or not math.isfinite(threshold)
+            or threshold < 0
+        ):
+            raise ValueError(f"{name} must be a finite non-negative number.")
 
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     failures: Counter[str] = Counter()
@@ -304,6 +358,11 @@ def analyze_reports(
             "median_duration_seconds": round(median(durations), 4),
             "runtime_trend": _runtime_trend(groups[pipeline]),
             "success_rate_trend": _success_rate_trend(groups[pipeline]),
+            "regression_flags": _regression_flags(
+                groups[pipeline],
+                runtime_regression_threshold_percent,
+                success_rate_regression_threshold_points,
+            ),
             "maximum_duration_seconds": round(max(durations), 4),
             "total_steps": sum(run["steps_total"] for run in runs),
             "total_passed_steps": sum(run["steps_passed"] for run in runs),

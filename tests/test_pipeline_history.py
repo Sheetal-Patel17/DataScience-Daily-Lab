@@ -468,3 +468,77 @@ def test_success_rate_trend_handles_insufficient_timestamps():
     assert trend["direction"] == "insufficient_data"
     assert trend["change_percentage_points"] is None
     assert trend["runs_compared"] == 1
+
+
+def test_regression_detector_flags_runtime_increase():
+    reports = [
+        report(duration=10),
+        report(duration=10),
+        report(duration=13),
+        report(duration=13),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    flags = result["pipeline_summaries"][0]["regression_flags"]
+
+    assert flags["runtime_regression"] is True
+    assert flags["success_rate_regression"] is False
+    assert flags["alerts"] == ["runtime_increase"]
+
+
+def test_regression_detector_flags_success_rate_decline():
+    reports = [
+        report(status="passed"),
+        report(status="passed"),
+        report(status="failed"),
+        report(status="failed"),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    flags = result["pipeline_summaries"][0]["regression_flags"]
+
+    assert flags["runtime_regression"] is False
+    assert flags["success_rate_regression"] is True
+    assert flags["alerts"] == ["success_rate_decline"]
+
+
+def test_regression_detector_supports_custom_thresholds():
+    reports = [
+        report(duration=10),
+        report(duration=10),
+        report(duration=12),
+        report(duration=12),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(
+        reports,
+        runtime_regression_threshold_percent=25,
+    )
+    flags = result["pipeline_summaries"][0]["regression_flags"]
+
+    assert flags["runtime_regression"] is False
+    assert flags["runtime_threshold_percent"] == 25
+
+
+def test_regression_detector_rejects_invalid_thresholds():
+    for threshold in (-1, float("inf"), float("nan"), True):
+        try:
+            analyze_reports(
+                [report()],
+                runtime_regression_threshold_percent=threshold,
+            )
+        except ValueError:
+            continue
+        raise AssertionError(f"Expected invalid threshold rejection: {threshold}")
