@@ -266,3 +266,66 @@ def test_pipeline_filter_rejects_invalid_names():
     with pytest.raises(ValueError, match="non-empty strings"):
         analyze_reports([report()], pipeline_names={""})
 
+
+def test_date_filter_selects_inclusive_date_range():
+    first = report()
+    middle = report()
+    last = report()
+
+    first["started_at_utc"] = "2026-11-05T10:00:00+00:00"
+    middle["started_at_utc"] = "2026-11-06T10:00:00+00:00"
+    last["started_at_utc"] = "2026-11-07T10:00:00+00:00"
+
+    result = analyze_reports(
+        [first, middle, last],
+        start_date="2026-11-06",
+        end_date="2026-11-06",
+    )
+
+    assert result["runs_analyzed"] == 1
+    assert result["run_history"][0]["started_at_utc"] == middle["started_at_utc"]
+    assert result["analysis_metadata"]["source_report_count"] == 3
+    assert result["analysis_metadata"]["analyzed_report_count"] == 1
+
+
+def test_date_filter_supports_start_date_only():
+    first = report()
+    second = report()
+    first["started_at_utc"] = "2026-11-05T10:00:00+00:00"
+    second["started_at_utc"] = "2026-11-06T10:00:00+00:00"
+
+    result = analyze_reports([first, second], start_date="2026-11-06")
+
+    assert result["runs_analyzed"] == 1
+
+
+def test_date_filter_supports_end_date_only():
+    first = report()
+    second = report()
+    first["started_at_utc"] = "2026-11-05T10:00:00+00:00"
+    second["started_at_utc"] = "2026-11-06T10:00:00+00:00"
+
+    result = analyze_reports([first, second], end_date="2026-11-05")
+
+    assert result["runs_analyzed"] == 1
+
+
+def test_date_filter_rejects_invalid_or_reversed_dates():
+    with pytest.raises(ValueError, match="YYYY-MM-DD"):
+        analyze_reports([report()], start_date="not-a-date")
+
+    with pytest.raises(ValueError, match="cannot be later"):
+        analyze_reports(
+            [report()],
+            start_date="2026-11-07",
+            end_date="2026-11-06",
+        )
+
+
+def test_date_filter_excludes_reports_without_timestamps():
+    item = report()
+    item.pop("started_at_utc")
+
+    with pytest.raises(ValueError, match="No reports matched"):
+        analyze_reports([item], start_date="2026-11-01")
+

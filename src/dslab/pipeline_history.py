@@ -5,7 +5,7 @@ import argparse
 import json
 import math
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +118,8 @@ def load_reports(input_dir: Path) -> list[dict[str, Any]]:
 def analyze_reports(
     reports: list[dict[str, Any]],
     pipeline_names: set[str] | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict[str, Any]:
     """Calculate reliability, runtime, and failed-step statistics."""
     if not reports:
@@ -129,9 +131,19 @@ def analyze_reports(
         if any(not isinstance(name, str) or not name.strip() for name in pipeline_names):
             raise ValueError("Pipeline names must be non-empty strings.")
 
+    try:
+        parsed_start = date.fromisoformat(start_date) if start_date else None
+        parsed_end = date.fromisoformat(end_date) if end_date else None
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Dates must use YYYY-MM-DD format.") from exc
+
+    if parsed_start and parsed_end and parsed_start > parsed_end:
+        raise ValueError("start_date cannot be later than end_date.")
+
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     failures: Counter[str] = Counter()
     seen_runs: set[str] = set()
+    selected_reports: list[dict[str, Any]] = []
 
     for index, report in enumerate(reports, start=1):
         validate_report(report)
@@ -148,6 +160,17 @@ def analyze_reports(
         if pipeline_names is not None and report["pipeline"] not in pipeline_names:
             continue
 
+        timestamp = report.get("started_at_utc")
+        if parsed_start or parsed_end:
+            if timestamp is None:
+                continue
+            run_date = datetime.fromisoformat(timestamp).astimezone(UTC).date()
+            if parsed_start and run_date < parsed_start:
+                continue
+            if parsed_end and run_date > parsed_end:
+                continue
+
+        selected_reports.append(report)
         groups[report["pipeline"]].append(report)
         for result in report.get("results", []):
             if result["status"] != "passed":
@@ -155,11 +178,6 @@ def analyze_reports(
 
     if not groups:
         raise ValueError("No reports matched the selected pipeline names.")
-
-    selected_reports = [
-        report for report in reports
-        if report["pipeline"] in groups
-    ]
 
     summaries = []
     for pipeline, runs in sorted(groups.items()):
@@ -200,6 +218,8 @@ def analyze_reports(
             "source_report_count": len(reports),
             "analyzed_report_count": len(selected_reports),
             "selected_pipeline_names": sorted(groups),
+            "start_date": start_date,
+            "end_date": end_date,
         },
         "report_type": "pipeline-history-analysis",
         "runs_analyzed": len(selected_reports),
