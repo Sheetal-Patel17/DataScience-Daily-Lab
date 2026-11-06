@@ -144,3 +144,15 @@ python -m dslab.categorical_audit --input data/day-14/customers.csv --output rep
 ```
 
 See `docs/day-14-categorical-feature-audit.md` for usage and limitations.
+
+## Day 16: Pipeline Run History and Reliability Analyzer
+
+Analyze saved pipeline reports for success rates, runtime statistics, failed-step
+frequency, and chronological run history.
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m dslab.pipeline_history --input-dir data/day-16 --output reports/day-16/history-analysis.json
+```
+
+See [the Day 16 guide](docs/day-16-pipeline-history-analyzer.md).
