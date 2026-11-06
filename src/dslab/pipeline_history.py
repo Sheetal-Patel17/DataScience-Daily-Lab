@@ -411,11 +411,36 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--config", type=Path, help="Optional JSON regression threshold configuration.")
     args = parser.parse_args(argv)
 
     try:
+        config = {}
+        if args.config:
+            config = json.loads(args.config.read_text(encoding="utf-8-sig"))
+            if not isinstance(config, dict):
+                raise ValueError("Regression config must contain a JSON object.")
+
+            allowed_keys = {
+                "runtime_regression_threshold_percent",
+                "success_rate_regression_threshold_points",
+            }
+            unknown_keys = set(config) - allowed_keys
+            if unknown_keys:
+                raise ValueError(
+                    f"Unknown regression config settings: {sorted(unknown_keys)}"
+                )
+
         reports = load_reports(args.input_dir)
-        analysis = analyze_reports(reports)
+        analysis = analyze_reports(
+            reports,
+            runtime_regression_threshold_percent=config.get(
+                "runtime_regression_threshold_percent", 20.0
+            ),
+            success_rate_regression_threshold_points=config.get(
+                "success_rate_regression_threshold_points", 10.0
+            ),
+        )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
             json.dumps(analysis, indent=2, ensure_ascii=False) + "\n",

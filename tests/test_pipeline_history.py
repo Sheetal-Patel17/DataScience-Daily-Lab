@@ -542,3 +542,68 @@ def test_regression_detector_rejects_invalid_thresholds():
         except ValueError:
             continue
         raise AssertionError(f"Expected invalid threshold rejection: {threshold}")
+
+
+def test_cli_loads_custom_regression_threshold_config(tmp_path):
+    source = tmp_path / "reports"
+    source.mkdir()
+
+    durations = [10, 10, 13, 13]
+    for index, duration in enumerate(durations, start=1):
+        item = report(duration=duration)
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+        (source / f"run-{index}.json").write_text(
+            json.dumps(item),
+            encoding="utf-8",
+        )
+
+    config = tmp_path / "thresholds.json"
+    config.write_text(
+        json.dumps({
+            "runtime_regression_threshold_percent": 50,
+            "success_rate_regression_threshold_points": 25,
+        }),
+        encoding="utf-8",
+    )
+
+    output = tmp_path / "analysis.json"
+    assert main([
+        "--input-dir", str(source),
+        "--output", str(output),
+        "--config", str(config),
+    ]) == 0
+
+    saved = json.loads(output.read_text(encoding="utf-8"))
+    flags = saved["pipeline_summaries"][0]["regression_flags"]
+
+    assert flags["runtime_threshold_percent"] == 50
+    assert flags["success_rate_threshold_points"] == 25
+    assert flags["runtime_regression"] is False
+
+
+def test_cli_rejects_unknown_regression_config_setting(tmp_path):
+    source = tmp_path / "reports"
+    source.mkdir()
+    (source / "run.json").write_text(
+        json.dumps(report()),
+        encoding="utf-8",
+    )
+
+    config = tmp_path / "invalid.json"
+    config.write_text(
+        json.dumps({"unknown_setting": 10}),
+        encoding="utf-8",
+    )
+
+    try:
+        main([
+            "--input-dir", str(source),
+            "--output", str(tmp_path / "analysis.json"),
+            "--config", str(config),
+        ])
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("Expected CLI to reject unknown config setting.")

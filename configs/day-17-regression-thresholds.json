@@ -1,0 +1,4 @@
+{
+  "runtime_regression_threshold_percent": 20.0,
+  "success_rate_regression_threshold_points": 10.0
+}
