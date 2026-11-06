@@ -174,6 +174,58 @@ def _runtime_trend(reports: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _success_rate_trend(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compare success rates across the earlier and recent halves."""
+    timestamped = [
+        item for item in reports
+        if item.get("started_at_utc") is not None
+    ]
+    timestamped.sort(
+        key=lambda item: datetime.fromisoformat(
+            item["started_at_utc"]
+        ).astimezone(UTC)
+    )
+
+    if len(timestamped) < 2:
+        return {
+            "direction": "insufficient_data",
+            "earlier_success_rate_percent": None,
+            "recent_success_rate_percent": None,
+            "change_percentage_points": None,
+            "runs_compared": len(timestamped),
+        }
+
+    split_index = len(timestamped) // 2
+    earlier = timestamped[:split_index]
+    recent = timestamped[split_index:]
+
+    earlier_rate = (
+        sum(item["status"] == "passed" for item in earlier)
+        / len(earlier)
+    ) * 100
+    recent_rate = (
+        sum(item["status"] == "passed" for item in recent)
+        / len(recent)
+    ) * 100
+
+    change = recent_rate - earlier_rate
+
+    if change > 0:
+        direction = "improved"
+    elif change < 0:
+        direction = "declined"
+    else:
+        direction = "unchanged"
+
+    return {
+        "direction": direction,
+        "earlier_success_rate_percent": round(earlier_rate, 4),
+        "recent_success_rate_percent": round(recent_rate, 4),
+        "change_percentage_points": round(change, 4),
+        "runs_compared": len(timestamped),
+    }
+
+
 def analyze_reports(
     reports: list[dict[str, Any]],
     pipeline_names: set[str] | None = None,
@@ -251,6 +303,7 @@ def analyze_reports(
             "average_duration_seconds": round(sum(durations) / len(durations), 4),
             "median_duration_seconds": round(median(durations), 4),
             "runtime_trend": _runtime_trend(groups[pipeline]),
+            "success_rate_trend": _success_rate_trend(groups[pipeline]),
             "maximum_duration_seconds": round(max(durations), 4),
             "total_steps": sum(run["steps_total"] for run in runs),
             "total_passed_steps": sum(run["steps_passed"] for run in runs),

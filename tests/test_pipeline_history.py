@@ -399,3 +399,72 @@ def test_runtime_trend_handles_insufficient_timestamps():
     assert trend["direction"] == "insufficient_data"
     assert trend["change_percent"] is None
     assert trend["runs_compared"] == 1
+
+
+def test_success_rate_trend_detects_improvement():
+    reports = [
+        report(status="failed"),
+        report(status="failed"),
+        report(status="passed"),
+        report(status="passed"),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    trend = result["pipeline_summaries"][0]["success_rate_trend"]
+
+    assert trend["direction"] == "improved"
+    assert trend["earlier_success_rate_percent"] == 0.0
+    assert trend["recent_success_rate_percent"] == 100.0
+    assert trend["change_percentage_points"] == 100.0
+    assert trend["runs_compared"] == 4
+
+
+def test_success_rate_trend_detects_decline():
+    reports = [
+        report(status="passed"),
+        report(status="passed"),
+        report(status="failed"),
+        report(status="failed"),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    trend = result["pipeline_summaries"][0]["success_rate_trend"]
+
+    assert trend["direction"] == "declined"
+    assert trend["change_percentage_points"] == -100.0
+
+
+def test_success_rate_trend_handles_unchanged_rate():
+    reports = [
+        report(status="passed"),
+        report(status="failed"),
+        report(status="passed"),
+        report(status="failed"),
+    ]
+    for index, item in enumerate(reports, start=1):
+        item["started_at_utc"] = (
+            f"2026-11-0{index}T10:00:00+00:00"
+        )
+
+    result = analyze_reports(reports)
+    trend = result["pipeline_summaries"][0]["success_rate_trend"]
+
+    assert trend["direction"] == "unchanged"
+    assert trend["change_percentage_points"] == 0.0
+
+
+def test_success_rate_trend_handles_insufficient_timestamps():
+    result = analyze_reports([report(status="passed")])
+    trend = result["pipeline_summaries"][0]["success_rate_trend"]
+
+    assert trend["direction"] == "insufficient_data"
+    assert trend["change_percentage_points"] is None
+    assert trend["runs_compared"] == 1
