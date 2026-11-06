@@ -329,3 +329,24 @@ def test_date_filter_excludes_reports_without_timestamps():
     with pytest.raises(ValueError, match="No reports matched"):
         analyze_reports([item], start_date="2026-11-01")
 
+
+def test_median_runtime_statistics():
+    reports = [
+        report(duration=2),
+        report(duration=4),
+        report(duration=100),
+        report(duration=6),
+    ]
+
+    result = analyze_reports(reports)
+    summary = result["pipeline_summaries"][0]
+
+    assert summary["median_duration_seconds"] == 5.0
+    assert summary["average_duration_seconds"] == 28.0
+    assert summary["maximum_duration_seconds"] == 100.0
+
+
+def test_median_runtime_for_single_run():
+    result = analyze_reports([report(duration=7)])
+    assert result["pipeline_summaries"][0]["median_duration_seconds"] == 7.0
+

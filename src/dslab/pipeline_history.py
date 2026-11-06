@@ -7,6 +7,7 @@ import math
 from collections import Counter, defaultdict
 from datetime import UTC, date, datetime
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 
@@ -190,6 +191,7 @@ def analyze_reports(
             "failed_runs": len(runs) - successes,
             "success_rate_percent": round(successes / len(runs) * 100, 2),
             "average_duration_seconds": round(sum(durations) / len(durations), 4),
+            "median_duration_seconds": round(median(durations), 4),
             "maximum_duration_seconds": round(max(durations), 4),
             "total_steps": sum(run["steps_total"] for run in runs),
             "total_passed_steps": sum(run["steps_passed"] for run in runs),
