@@ -156,3 +156,23 @@ python -m dslab.pipeline_history --input-dir data/day-16 --output reports/day-16
 ```
 
 See [the Day 16 guide](docs/day-16-pipeline-history-analyzer.md).
+
+## Day 18: Time-Series Data Quality Auditor
+
+Audits timestamped sensor datasets for missing or invalid timestamps,
+duplicate records, chronological ordering issues, missing sampling intervals,
+and numeric outliers.
+
+- Configurable sampling frequency and timestamp column.
+- IQR-based numeric outlier screening.
+- Structured JSON quality reports.
+- CSV input with UTF-8 BOM support.
+- Automated pytest coverage.
+
+Example:
+
+```powershell
+python -m dslab.timeseries_audit --input data/day-18/sensor_readings.csv --output reports/day-18-audit.json --config configs/day-18-timeseries-audit.json
+```
+
+Documentation: `docs/day-18-timeseries-data-quality-auditor.md`
