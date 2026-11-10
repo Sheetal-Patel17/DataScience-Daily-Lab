@@ -176,3 +176,6 @@ python -m dslab.timeseries_audit --input data/day-18/sensor_readings.csv --outpu
 ```
 
 Documentation: `docs/day-18-timeseries-data-quality-auditor.md`
+
+## Day 19:
+
