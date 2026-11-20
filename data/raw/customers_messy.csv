@@ -1,0 +1,11 @@
+﻿customer_id,name,email,age,city,signup_date
+101, Asha Patel ,ASHA@EXAMPLE.COM,22,Ahmedabad,2026-01-05
+102,Rahul Shah,rahul@example.com,25,Surat,2026-01-08
+103,Meera Joshi,meera@example.com,,Rajkot,2026-01-10
+104,Dev Kumar,INVALID_EMAIL,30,Ahmedabad,2026-01-12
+105,Neha Desai,neha@example.com,200,Vadodara,2026-01-15
+106,Arjun Mehta,arjun@example.com,28,,2026-01-17
+106,Arjun Mehta,arjun@example.com,28,,2026-01-17
+107,,unknown@example.com,24,Surat,2026-01-20
+108,Kavya Rao,kavya@example.com,21,Rajkot,INVALID_DATE
+109,Ishaan Patel,ishaan@example.com,-5,Ahmedabad,2026-01-25

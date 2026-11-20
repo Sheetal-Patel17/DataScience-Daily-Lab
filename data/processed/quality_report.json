@@ -1,0 +1,28 @@
+{
+  "input_rows": 10,
+  "cleaned_rows": 2,
+  "rejected_rows": 8,
+  "before_cleaning": {
+    "rows": 10,
+    "columns": 6,
+    "missing_cells": 4,
+    "duplicate_rows": 1,
+    "duplicate_customer_ids": 1
+  },
+  "after_cleaning": {
+    "rows": 2,
+    "columns": 6,
+    "missing_cells": 0,
+    "duplicate_rows": 0,
+    "duplicate_customer_ids": 0
+  },
+  "rejection_reasons": {
+    "invalid_age": 3,
+    "invalid_email": 1,
+    "missing_city": 2,
+    "duplicate_complete_row": 1,
+    "duplicate_customer_id": 1,
+    "missing_name": 1,
+    "invalid_signup_date": 1
+  }
+}

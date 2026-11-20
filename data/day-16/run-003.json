@@ -1,0 +1,1 @@
+{"pipeline":"customer-quality-pipeline","started_at_utc":"2026-11-05T09:00:00+00:00","status":"passed","duration_seconds":2.72,"steps_total":3,"steps_passed":3,"steps_failed":0,"results":[{"name":"load-data","status":"passed"},{"name":"validate-data","status":"passed"},{"name":"export-report","status":"passed"}]}

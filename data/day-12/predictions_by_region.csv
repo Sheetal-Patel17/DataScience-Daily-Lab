@@ -1,0 +1,11 @@
+﻿actual_label,predicted_label,region,device
+cat,cat,north,mobile
+dog,dog,north,desktop
+cat,dog,north,mobile
+dog,dog,north,desktop
+cat,cat,south,mobile
+dog,dog,south,desktop
+cat,cat,south,mobile
+dog,cat,south,desktop
+cat,cat,west,mobile
+dog,dog,west,desktop

@@ -1,0 +1,13 @@
+actual_label,predicted_label
+cat,cat
+dog,dog
+cat,dog
+rabbit,rabbit
+dog,dog
+cat,cat
+rabbit,cat
+dog,cat
+rabbit,rabbit
+cat,cat
+dog,rabbit
+rabbit,rabbit

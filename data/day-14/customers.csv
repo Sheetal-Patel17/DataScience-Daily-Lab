@@ -1,0 +1,11 @@
+﻿customer_id,city,plan,feedback
+1001,Ahmedabad,Basic,Good
+1002,ahmedabad,Premium,Excellent
+1003," Ahmedabad ",Basic,Good
+1004,Surat,Basic,
+1005,Rajkot,Premium,Average
+1006,Surat,Basic,Good
+1007,Ahmedabad,Premium,Good
+1008,Junagadh,Basic,Rare comment
+1009,Surat,Premium,Good
+1010,Ahmedabad,Basic,Excellent

@@ -1,0 +1,9 @@
+customer_id,age,city,monthly_spend
+C101,25,Ahmedabad,1800
+C102,34,Ahmedabad,2400
+C103,38,Ahmedabad,2600
+C104,32,Surat,2100
+C105,36,Ahmedabad,2500
+C106,29,Ahmedabad,2300
+C107,31,Surat,2000
+C108,,Ahmedabad,2200
