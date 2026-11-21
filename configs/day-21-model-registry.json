@@ -1,0 +1,30 @@
+
+{
+    "project": "DataScience-Daily-Lab",
+    "day": 21,
+    "module": "model_registry",
+    "description": "Lightweight machine learning model registry",
+    "storage": {
+        "format": "json",
+        "path": "artifacts/model_registry.json"
+    },
+    "supported_stages": [
+        "Development",
+        "Staging",
+        "Production",
+        "Archived"
+    ],
+    "features": [
+        "model_registration",
+        "version_management",
+        "metadata_tracking",
+        "metrics_tracking",
+        "lifecycle_management",
+        "model_comparison",
+        "json_persistence"
+    ],
+    "testing": {
+        "framework": "pytest",
+        "test_file": "tests/test_model_registry.py"
+    }
+}
