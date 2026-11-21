@@ -1,0 +1,18 @@
+
+{
+  "experiment_name": "customer-churn-classification",
+  "description": "Compare machine-learning model experiments",
+  "tracking": {
+    "storage": "reports/day-20/experiments.json",
+    "json_export": "reports/day-20/experiment-history.json",
+    "csv_export": "reports/day-20/experiment-history.csv"
+  },
+  "reproducibility": {
+    "random_seed": 42,
+    "track_dataset_fingerprint": true
+  },
+  "comparison": {
+    "primary_metric": "f1",
+    "maximize": true
+  }
+}
